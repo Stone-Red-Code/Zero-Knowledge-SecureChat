@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:ZeroKnowledgeSecureChat"
+             xmlns:sfChat="clr-namespace:Syncfusion.Maui.Chat;assembly=Syncfusion.Maui.Chat"
+             xmlns:sfNavigationDrawer="clr-namespace:Syncfusion.Maui.Toolkit.NavigationDrawer;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:sfButton="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:sfListView="clr-namespace:Syncfusion.Maui.ListView;assembly=Syncfusion.Maui.ListView"
+             xmlns:sfPopup="clr-namespace:Syncfusion.Maui.Popup;assembly=Syncfusion.Maui.Popup"
+             xmlns:sfProgressBar="clr-namespace:Syncfusion.Maui.ProgressBar;assembly=Syncfusion.Maui.ProgressBar"
+             xmlns:sfTheme="clr-namespace:Syncfusion.Maui.Themes;assembly=Syncfusion.Maui.Core"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="local:MainPageDataContext"
+             x:Class="ZeroKnowledgeSecureChat.MainPage"
+             Loaded="ContentPage_Loaded">
+
+    <ContentPage.BindingContext>
+        <local:MainPageDataContext />
+    </ContentPage.BindingContext>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <sfTheme:SyncfusionThemeDictionary>
+                    <sfTheme:SyncfusionThemeDictionary.MergedDictionaries>
+                        <ResourceDictionary>
+                            <x:String x:Key="SfChatTheme">CustomTheme</x:String>
+                            <Color x:Key="SfChatSendButtonDisabledColor">White</Color>
+                            <Color x:Key="SfChatDisabledSendButtonBackground">Gray</Color>
+                            <Color x:Key="SfChatSendButtonColor">Black</Color>
+                            <Color x:Key="SfChatSendButtonBackground">White</Color>
+                            <Color x:Key="SfChatHoveredSendButtonBackground">#9880e5</Color>
+                            <Color x:Key="SfChatIncomingMessageTimestampTextColor">Gray</Color>
+                            <Color x:Key="SfChatOutgoingMessageTimestampTextColor">Gray</Color>
+                            <Color x:Key="SfChatTimeBreakViewTextColor">Gray</Color>
+                            <Color x:Key="SfChatTimeBreakViewStroke">Gray</Color>
+                            <Color x:Key="SfChatTimeBreakViewBackground">Transparent</Color>
+                        </ResourceDictionary>
+                    </sfTheme:SyncfusionThemeDictionary.MergedDictionaries>
+                </sfTheme:SyncfusionThemeDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid ColumnDefinitions="300, *" RowDefinitions="*, 10">
+
+        <Border Grid.Column="0" Margin="10, 10, 10, 0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10" />
+            </Border.StrokeShape>
+
+            <Grid RowDefinitions="Auto, *, Auto, Auto">
+                <Border Margin="10">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="25,0,0,25" />
+                    </Border.StrokeShape>
+                    <Label Text="Zero-Knowledge SecureChat" FontSize="Medium" TextColor="#00c896" Padding="10" HorizontalTextAlignment="Center" />
+                </Border>
+
+                <sfListView:SfListView Grid.Row="1" x:Name="conversationsListView" ItemsSource="{Binding ChatClients}" SelectedItem="{Binding SelectedChatClient}" AutoFitMode="DynamicHeight" ItemSpacing="0, 5" Margin="10, -5">
+                    <sfListView:SfListView.ItemTemplate>
+                        <DataTemplate>
+                            <ViewCell>
+                                <ViewCell.View>
+                                    <Border>
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        <StackLayout Margin="5" x:DataType="local:ChatClientViewModel">
+                                            <Grid ColumnDefinitions="*, Auto">
+                                                <Label Text="{Binding ChatClient.Name}" LineBreakMode="TailTruncation" FontSize="Subtitle" />
+                                                <Label Text="{Binding LastMessageDateTime, Converter={StaticResource DateTimeConverter}}" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource Gray300}" />
+                                            </Grid>
+                                            <Label Text="{Binding LastMessage}" TextColor="{StaticResource Gray300}" LineBreakMode="TailTruncation" FontSize="Default">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding LastMessage}" Value="">
+                                                        <Setter Property="Text" Value="No Messages" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </StackLayout>
+                                    </Border>
+                                </ViewCell.View>
+                            </ViewCell>
+                        </DataTemplate>
+                    </sfListView:SfListView.ItemTemplate>
+                    <sfListView:SfListView.SelectedItemTemplate>
+                        <DataTemplate>
+                            <ViewCell>
+                                <ViewCell.View>
+                                    <Border Stroke="White">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        <StackLayout Margin="5" x:DataType="local:ChatClientViewModel">
+                                            <Grid ColumnDefinitions="*, Auto">
+                                                <Label Text="{Binding ChatClient.Name}" LineBreakMode="TailTruncation" FontSize="Subtitle" />
+                                                <Label Text="{Binding LastMessageDateTime, Converter={StaticResource DateTimeConverter}}" HorizontalOptions="End" VerticalOptions="Center" TextColor="{StaticResource Gray300}" />
+                                            </Grid>
+                                            <Label Text="{Binding LastMessage}" TextColor="{StaticResource Gray300}" LineBreakMode="TailTruncation" FontSize="Default">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding LastMessage}" Value="">
+                                                        <Setter Property="Text" Value="No Messages" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </StackLayout>
+                                    </Border>
+                                </ViewCell.View>
+                            </ViewCell>
+                        </DataTemplate>
+                    </sfListView:SfListView.SelectedItemTemplate>
+                </sfListView:SfListView>
+
+                <sfButton:SfButton Grid.Row="2" x:Name="connectButton" Text="New Conversation" Command="{Binding OpenNewConversationDialog}" Margin="10" CornerRadius="10" />
+                <sfButton:SfButton Grid.Row="3" Text="Save" Clicked="SfButton_Clicked" Margin="10" CornerRadius="10" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" RowDefinitions="Auto, *">
+            <Border Grid.Column="0" Margin="10, 10, 10, 0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+
+                <Grid VerticalOptions="Center" ColumnDefinitions="*, *, *, *, *"  Padding="10, 5">
+                    <Label Grid.Column="0" Text="{Binding SelectedChatClient.ChatClient.Name}" VerticalOptions="Center" VerticalTextAlignment="Center" FontSize="Title" />
+
+                    <Label Grid.Column="1" LineBreakMode="WordWrap" Text="{Binding SelectedChatClient.ServerConnectionStatus}" VerticalTextAlignment="Center" />
+                    <Label Grid.Column="2" LineBreakMode="WordWrap" Text="{Binding SelectedChatClient.State}" VerticalTextAlignment="Center" />
+                    <Label Grid.Column="3" LineBreakMode="WordWrap" Text="{Binding SelectedChatClient.KeyBytesUsed}" VerticalTextAlignment="Center" />
+
+                    <Label Grid.Column="4" LineBreakMode="WordWrap" Text="{Binding SelectedChatClient.ErrorMessage, StringFormat='Error: {0}'}" HorizontalOptions="End" VerticalOptions="Center" VerticalTextAlignment="Center" TextColor="Red">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedChatClient.ErrorMessage}" Value="">
+                                <Setter Property="TextColor" Value="Green" />
+                                <Setter Property="Text" Value="No Errors" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+            </Border>
+
+            <sfChat:SfChat x:Name="sfChat" Grid.Row="2" Background="Transparent" MaximumWidthRequest="1040" ShowTimeBreak="True" IncomingMessageTimestampFormat="g" OutgoingMessageTimestampFormat="g" SendMessageCommand="{Binding SelectedChatClient.SendMessage}" CurrentUser="{Binding SelectedChatClient.CurrentUser, Mode=OneWay}" Messages="{Binding SelectedChatClient.Messages}" MessageShape="TearDrop" />
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" RowDefinitions="*, Auto">
+            <sfProgressBar:SfLinearProgressBar Grid.Row="1" TrackFill="Transparent" Background="Transparent" Progress="{Binding SelectedChatClient.QueuedMessagesRemaining}" Maximum="{Binding SelectedChatClient.QueuedMessagesMax}" />
+        </Grid>
+
+        <sfPopup:SfPopup ShowCloseButton="True" IsOpen="{Binding NewConversationDialogIsOpen}" HeaderTitle="New Conversation" HeightRequest="270">
+            <sfPopup:SfPopup.PopupStyle>
+                <sfPopup:PopupStyle CornerRadius="10" HeaderTextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" MessageTextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" PopupBackground="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+            </sfPopup:SfPopup.PopupStyle>
+            <sfPopup:SfPopup.ContentTemplate>
+                <DataTemplate x:DataType="local:MainPageDataContext">
+                    <StackLayout Padding="10" Spacing="5">
+                        <Entry Placeholder="Enter a name for the new conversation" Text="{Binding NewConversationName}" />
+                        <sfButton:SfButton Text="Create New" CornerRadius="10" Command="{Binding CreateNewConversation}" />
+                        <sfButton:SfButton Text="Add New Via QR Code" CornerRadius="10" />
+                        <sfButton:SfButton Text="Add New Via Key File" CornerRadius="10" Command="{Binding ImportConversation}" />
+                    </StackLayout>
+                </DataTemplate>
+            </sfPopup:SfPopup.ContentTemplate>
+        </sfPopup:SfPopup>
+
+        <sfPopup:SfPopup ShowCloseButton="False" StaysOpen="True" IsOpen="{Binding Loading}" HeaderTitle="{Binding LoadingText}" HeightRequest="270">
+            <sfPopup:SfPopup.PopupStyle>
+                <sfPopup:PopupStyle CornerRadius="10" HeaderTextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" MessageTextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" PopupBackground="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+            </sfPopup:SfPopup.PopupStyle>
+            <sfPopup:SfPopup.ContentTemplate>
+                <DataTemplate x:DataType="local:MainPageDataContext">
+                    <sfProgressBar:SfCircularProgressBar TrackFill="Transparent" Background="Transparent" Progress="{Binding LoadingProgress}" IsIndeterminate="{Binding LoadingIndeterminate}" Maximum="1">
+                        <Label Text="{Binding LoadingProgress, StringFormat='{0:P}'}" HorizontalTextAlignment="Center" WidthRequest="100" TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" FontSize="Subtitle" />
+                    </sfProgressBar:SfCircularProgressBar>
+                </DataTemplate>
+            </sfPopup:SfPopup.ContentTemplate>
+        </sfPopup:SfPopup>
+    </Grid>
+</ContentPage>

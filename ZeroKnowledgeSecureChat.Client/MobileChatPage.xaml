@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:ZeroKnowledgeSecureChat"
+             xmlns:sfChat="clr-namespace:Syncfusion.Maui.Chat;assembly=Syncfusion.Maui.Chat"
+             xmlns:sfNavigationDrawer="clr-namespace:Syncfusion.Maui.Toolkit.NavigationDrawer;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:sfButton="clr-namespace:Syncfusion.Maui.Toolkit.Buttons;assembly=Syncfusion.Maui.Toolkit"
+             xmlns:sfListView="clr-namespace:Syncfusion.Maui.ListView;assembly=Syncfusion.Maui.ListView"
+             xmlns:sfProgressBar="clr-namespace:Syncfusion.Maui.ProgressBar;assembly=Syncfusion.Maui.ProgressBar"
+             xmlns:sfExpander="clr-namespace:Syncfusion.Maui.Expander;assembly=Syncfusion.Maui.Expander"
+             xmlns:sfTheme="clr-namespace:Syncfusion.Maui.Themes;assembly=Syncfusion.Maui.Core"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:DataType="local:ChatClientViewModel"
+             x:Class="ZeroKnowledgeSecureChat.MobileChatPage">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <sfTheme:SyncfusionThemeDictionary>
+                    <sfTheme:SyncfusionThemeDictionary.MergedDictionaries>
+                        <ResourceDictionary>
+                            <x:String x:Key="SfChatTheme">CustomTheme</x:String>
+                            <Color x:Key="SfChatSendButtonDisabledColor">White</Color>
+                            <Color x:Key="SfChatDisabledSendButtonBackground">Gray</Color>
+                            <Color x:Key="SfChatSendButtonColor">Black</Color>
+                            <Color x:Key="SfChatSendButtonBackground">White</Color>
+                            <Color x:Key="SfChatHoveredSendButtonBackground">#9880e5</Color>
+                            <Color x:Key="SfChatIncomingMessageTimestampTextColor">Gray</Color>
+                            <Color x:Key="SfChatOutgoingMessageTimestampTextColor">Gray</Color>
+                        </ResourceDictionary>
+                    </sfTheme:SyncfusionThemeDictionary.MergedDictionaries>
+                </sfTheme:SyncfusionThemeDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <NavigationPage.TitleView>
+        <Border Margin="10">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="25,0,0,25" />
+            </Border.StrokeShape>
+            <Label Text="Zero-Knowledge SecureChat" FontSize="Medium" TextColor="#00c896" Padding="0" VerticalOptions="Center" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+        </Border>
+    </NavigationPage.TitleView>
+
+    <Grid RowDefinitions="*, 10">
+        <Grid RowDefinitions="Auto, *">
+            <Border Grid.Column="0" Margin="10, 0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+
+                <sfExpander:SfExpander VerticalOptions="Center">
+                    <sfExpander:SfExpander.Header>
+                        <Label Grid.Column="0" Text="{Binding ChatClient.Name}" Padding="10, 5" VerticalOptions="Center" VerticalTextAlignment="Center" FontSize="Title" />
+                    </sfExpander:SfExpander.Header>
+                    <sfExpander:SfExpander.Content>
+                        <VerticalStackLayout Padding="10, 10">
+                            <Label Grid.Column="1" LineBreakMode="WordWrap" Text="{Binding ServerConnectionStatus}" />
+                            <Label Grid.Column="2" LineBreakMode="WordWrap" Text="{Binding State}" />
+                            <Label Grid.Column="3" LineBreakMode="WordWrap" Text="{Binding KeyBytesUsed}" />
+
+                            <Label Grid.Column="4" LineBreakMode="WordWrap" Text="{Binding ErrorMessage, StringFormat='Error: {0}'}" TextColor="Red">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding ErrorMessage}" Value="">
+                                        <Setter Property="TextColor" Value="Green" />
+                                        <Setter Property="Text" Value="No Errors" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </VerticalStackLayout>
+                    </sfExpander:SfExpander.Content>
+                </sfExpander:SfExpander>
+            </Border>
+
+            <sfChat:SfChat x:Name="sfChat" Grid.Row="2" Background="Transparent" MaximumWidthRequest="1040" SendMessageCommand="{Binding SendMessage}" CurrentUser="{Binding CurrentUser, Mode=OneWay}" Messages="{Binding Messages}" MessageShape="TearDrop" />
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" RowDefinitions="*, Auto">
+            <sfProgressBar:SfLinearProgressBar Grid.Row="1" TrackFill="Transparent" Background="Transparent" Progress="{Binding QueuedMessagesRemaining}" Maximum="{Binding QueuedMessagesMax}" />
+        </Grid>
+    </Grid>
+</ContentPage>
