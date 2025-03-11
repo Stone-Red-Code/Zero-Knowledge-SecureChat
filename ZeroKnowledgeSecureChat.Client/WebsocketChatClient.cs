@@ -28,14 +28,14 @@ public class WebSocketChatClient : ChatClient
         webSocketClient.MessageReceived += WebSocketClient_MessageReceived;
     }
 
-    public override async Task TransmitData(byte[] data)
+    public override async Task<bool> TransmitData(byte[] data)
     {
         if (webSocketClient == null || !webSocketClient.Connected)
         {
-            return;
+            return false;
         }
 
-        _ = await webSocketClient.SendAsync([.. ConversationId, .. data]);
+        return await webSocketClient.SendAsync([.. ConversationId, .. data]);
     }
 
     private async void WebSocketClient_MessageReceived(object? sender, MessageReceivedEventArgs e)

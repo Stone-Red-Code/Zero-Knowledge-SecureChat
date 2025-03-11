@@ -100,7 +100,10 @@ public abstract class ChatClient
 
         SendReceiveState = SendReceiveState.WaitForPong;
 
-        await SendData(ProtocolMessageType.Ping);
+        if (!await SendData(ProtocolMessageType.Ping))
+        {
+            return Result.Fail("Failed to send ping");
+        }
 
         try
         {
@@ -130,7 +133,10 @@ public abstract class ChatClient
             return Result.Fail(ex.Message);
         }
 
-        await SendData(ProtocolMessageType.MessageRequest);
+        if (!await SendData(ProtocolMessageType.MessageRequest))
+        {
+            return Result.Fail("Failed to send message request");
+        }
 
         try
         {
@@ -145,7 +151,10 @@ public abstract class ChatClient
 
         SendReceiveState = SendReceiveState.WaitForMessageAccept;
 
-        await SendData(ProtocolMessageType.Message, encryptedData);
+        if (!await SendData(ProtocolMessageType.Message, encryptedData))
+        {
+            return Result.Fail("Failed to send message");
+        }
 
         try
         {
@@ -199,8 +208,6 @@ public abstract class ChatClient
 
         return Result.Ok();
     }
-
-    public abstract Task TransmitData(byte[] data);
 
     protected async Task ProcessData(byte[] data)
     {
@@ -282,12 +289,6 @@ public abstract class ChatClient
         }
     }
 
-    private Task SendData(ProtocolMessageType type, string content)
-    {
-        byte[] contentBytes = Encoding.UTF8.GetBytes(content);
-        return SendData(type, contentBytes);
-    }
-
     private async Task<Result> ReceiveMessage(byte[] encryptedData)
     {
         if (SendReceiveState != SendReceiveState.WaitForMessage)
@@ -323,7 +324,7 @@ public abstract class ChatClient
         return Result.Ok();
     }
 
-    private Task ProcessMessageRequest()
+    private Task<bool> ProcessMessageRequest()
     {
         ProtocolMessageType messageType = SendReceiveState == SendReceiveState.None ? ProtocolMessageType.MessageRequestAccept : ProtocolMessageType.MessageRequestDeny;
 
@@ -350,8 +351,10 @@ public abstract class ChatClient
         SendReceiveState = SendReceiveState.None;
     }
 
+    public abstract Task<bool> TransmitData(byte[] data);
+
     // Format: [HMAC (64 bytes)][Version (1 byte)][Type (1 byte)][Timestamp (8 bytes)][Data]
-    private Task SendData(ProtocolMessageType type, byte[]? data = null)
+    private Task<bool> SendData(ProtocolMessageType type, byte[]? data = null)
     {
         data ??= [];
 
@@ -362,5 +365,11 @@ public abstract class ChatClient
         byte[] signedData = [.. hmac, .. extendedData];
 
         return TransmitData(signedData);
+    }
+
+    private Task<bool> SendData(ProtocolMessageType type, string content)
+    {
+        byte[] contentBytes = Encoding.UTF8.GetBytes(content);
+        return SendData(type, contentBytes);
     }
 }

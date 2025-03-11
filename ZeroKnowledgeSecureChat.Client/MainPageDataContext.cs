@@ -27,7 +27,7 @@ internal partial class MainPageDataContext : INotifyPropertyChanged
     private bool newConversationDialogIsOpen;
     private bool loading;
     private double loadingProgress;
-    private string loadingText;
+    private string loadingText = "Loading...";
 
     public ObservableCollection<ChatClientViewModel> ChatClients { get; } = [];
 
