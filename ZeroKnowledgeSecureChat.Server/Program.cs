@@ -5,17 +5,14 @@ using System.Net.WebSockets;
 
 using WatsonWebsocket;
 
-if (args.Length != 1)
-{
-    ConsoleExt.WriteLine("Usage: ZeroKnowledgeSecureChat.Server <uri>", ConsoleColor.Red);
-    return;
-}
-
-Uri uri;
+Uri uri = new Uri("http://localhost:9000");
 
 try
 {
-    uri = new Uri(args[0]);
+    if (args.Length > 0)
+    {
+        uri = new Uri(args[0]);
+    }
 }
 catch (UriFormatException)
 {
@@ -29,7 +26,6 @@ ConcurrentDictionary<Guid, HashSet<string>> clientIds = new();
 WatsonWsServer webSocketServer = new WatsonWsServer(uri);
 
 webSocketServer.ClientConnected += WebSocketServer_ClientConnected;
-
 webSocketServer.ClientDisconnected += WebSocketServer_ClientDisconnected;
 webSocketServer.MessageReceived += WebSocketServer_MessageReceived;
 

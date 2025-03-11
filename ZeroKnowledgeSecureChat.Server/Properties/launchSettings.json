@@ -1,8 +1,7 @@
 {
   "profiles": {
     "ZeroKnowledgeSecureChat.Server": {
-      "commandName": "Project",
-      "commandLineArgs": "http://localhost:9000"
+      "commandName": "Project"
     },
     "Container (Dockerfile)": {
       "commandName": "Docker"
