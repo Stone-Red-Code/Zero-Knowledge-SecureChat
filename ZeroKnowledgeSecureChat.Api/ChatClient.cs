@@ -121,7 +121,7 @@ public abstract class ChatClient
 
         try
         {
-            encryptedData = message.Encrypt(CurrentKey, SigningKey, out newKey);
+            encryptedData = message.Encrypt(CurrentKey, out newKey);
         }
         catch (ArgumentException ex)
         {
@@ -300,7 +300,7 @@ public abstract class ChatClient
 
         try
         {
-            message = Message.Decrypt(CurrentKey, SigningKey, encryptedData, out newKey);
+            message = Message.Decrypt(CurrentKey, encryptedData, out newKey);
             message.Author = Name;
         }
         catch (ArgumentException ex)
