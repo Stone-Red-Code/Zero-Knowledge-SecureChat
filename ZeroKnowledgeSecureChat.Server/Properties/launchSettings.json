@@ -1,10 +1,10 @@
 {
-  "profiles": {
-    "ZeroKnowledgeSecureChat.Server": {
-      "commandName": "Project"
-    },
-    "Container (Dockerfile)": {
-      "commandName": "Docker"
+    "profiles": {
+        "ZeroKnowledgeSecureChat.Server": {
+            "commandName": "Project"
+        },
+        "Container (Dockerfile)": {
+            "commandName": "Docker"
+        }
     }
-  }
 }

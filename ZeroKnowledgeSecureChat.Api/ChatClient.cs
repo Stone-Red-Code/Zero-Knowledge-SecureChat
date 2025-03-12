@@ -107,7 +107,7 @@ public abstract class ChatClient
 
         try
         {
-            await TaskExtensions.WaitUntil(() => SendReceiveState == SendReceiveState.PongReceived, TimeSpan.FromSeconds(10));
+            await TaskExtensions.WaitUntil(() => SendReceiveState == SendReceiveState.PongReceived, timeout);
         }
         catch (TimeoutException)
         {
@@ -189,11 +189,11 @@ public abstract class ChatClient
 
         SendReceiveState = SendReceiveState.WaitForPong;
 
-        await SendData(ProtocolMessageType.Ping);
+        _ = await SendData(ProtocolMessageType.Ping);
 
         try
         {
-            await TaskExtensions.WaitUntil(() => SendReceiveState == SendReceiveState.PongReceived, TimeSpan.FromSeconds(10));
+            await TaskExtensions.WaitUntil(() => SendReceiveState == SendReceiveState.PongReceived, timeout);
         }
         catch (TimeoutException)
         {
@@ -209,13 +209,15 @@ public abstract class ChatClient
         return Result.Ok();
     }
 
+    public abstract Task<bool> TransmitData(byte[] data);
+
     protected async Task ProcessData(byte[] data)
     {
         byte[] hmac = data[..64];
 
         if (!EncryptionUtilities.VerifyHmacSha512(data[64..], SigningKey, hmac))
         {
-            await SendData(ProtocolMessageType.Error, "HMAC does not match");
+            _ = await SendData(ProtocolMessageType.Error, "HMAC does not match");
             return;
         }
 
@@ -223,7 +225,7 @@ public abstract class ChatClient
 
         if (data.Length <= 1)
         {
-            await SendData(ProtocolMessageType.Error, "Data length must be at least 2 bytes");
+            _ = await SendData(ProtocolMessageType.Error, "Data length must be at least 2 bytes");
             return;
         }
 
@@ -231,7 +233,7 @@ public abstract class ChatClient
 
         if (version != 1)
         {
-            await SendData(ProtocolMessageType.Error, "Unsupported version");
+            _ = await SendData(ProtocolMessageType.Error, "Unsupported version");
             return;
         }
 
@@ -239,7 +241,7 @@ public abstract class ChatClient
 
         if (BitConverter.ToInt64(timeStamp) < (DateTimeOffset.UtcNow - timeout).ToUnixTimeSeconds())
         {
-            await SendData(ProtocolMessageType.Error, "Data is too old");
+            _ = await SendData(ProtocolMessageType.Error, "Data is too old");
             return;
         }
 
@@ -252,7 +254,7 @@ public abstract class ChatClient
                 break;
 
             case ProtocolMessageType.Ping:
-                await SendData(ProtocolMessageType.Pong);
+                _ = await SendData(ProtocolMessageType.Pong);
                 break;
 
             case ProtocolMessageType.Pong:
@@ -260,7 +262,7 @@ public abstract class ChatClient
                 break;
 
             case ProtocolMessageType.MessageRequest:
-                await ProcessMessageRequest();
+                _ = await ProcessMessageRequest();
                 break;
 
             case ProtocolMessageType.MessageRequestCancel:
@@ -284,7 +286,7 @@ public abstract class ChatClient
                 break;
 
             default:
-                await SendData(ProtocolMessageType.Error);
+                _ = await SendData(ProtocolMessageType.Error);
                 break;
         }
     }
@@ -293,7 +295,7 @@ public abstract class ChatClient
     {
         if (SendReceiveState != SendReceiveState.WaitForMessage)
         {
-            await SendData(ProtocolMessageType.Error);
+            _ = await SendData(ProtocolMessageType.Error);
         }
 
         Message message;
@@ -307,11 +309,11 @@ public abstract class ChatClient
         catch (ArgumentException ex)
         {
             SendReceiveState = SendReceiveState.None;
-            await SendData(ProtocolMessageType.Error, ex.Message);
+            _ = await SendData(ProtocolMessageType.Error, ex.Message);
             return Result.Fail(ex.Message);
         }
 
-        await SendData(ProtocolMessageType.MessageReceived);
+        _ = await SendData(ProtocolMessageType.MessageReceived);
 
         CurrentKey = newKey;
 
@@ -350,8 +352,6 @@ public abstract class ChatClient
 
         SendReceiveState = SendReceiveState.None;
     }
-
-    public abstract Task<bool> TransmitData(byte[] data);
 
     // Format: [HMAC (64 bytes)][Version (1 byte)][Type (1 byte)][Timestamp (8 bytes)][Data]
     private Task<bool> SendData(ProtocolMessageType type, byte[]? data = null)

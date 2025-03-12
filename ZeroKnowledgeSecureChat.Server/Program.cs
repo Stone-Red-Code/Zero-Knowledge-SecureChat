@@ -20,7 +20,7 @@ catch (UriFormatException)
     return;
 }
 
-ConcurrentDictionary<string, (Guid Client1, Guid Client2)> conversations = new();
+ConcurrentDictionary<string, Conversation> conversations = new();
 ConcurrentDictionary<Guid, HashSet<string>> clientIds = new();
 
 WatsonWsServer webSocketServer = new WatsonWsServer(uri);
@@ -57,15 +57,17 @@ void WebSocketServer_ClientDisconnected(object? sender, DisconnectionEventArgs e
     {
         foreach (string conversationId in conversationIds)
         {
-            (Guid Client1, Guid Client2) conversation = conversations[conversationId];
+            Conversation conversation = conversations[conversationId];
 
             if (conversation.Client1 == e.Client.Guid)
             {
-                _ = conversations.TryUpdate(conversationId, (Guid.Empty, conversation.Client2), conversation);
+                conversation.Client1 = Guid.Empty;
+                conversations[conversationId] = conversation;
             }
             else if (conversation.Client2 == e.Client.Guid)
             {
-                _ = conversations.TryUpdate(conversationId, (conversation.Client1, Guid.Empty), conversation);
+                conversation.Client2 = Guid.Empty;
+                conversations[conversationId] = conversation;
             }
 
             if (conversations[conversationId].Client1 == Guid.Empty && conversations[conversationId].Client2 == Guid.Empty)
@@ -76,7 +78,7 @@ void WebSocketServer_ClientDisconnected(object? sender, DisconnectionEventArgs e
     }
 }
 
-void WebSocketServer_MessageReceived(object? sender, MessageReceivedEventArgs e)
+async void WebSocketServer_MessageReceived(object? sender, MessageReceivedEventArgs e)
 {
     if (e.Data.Count < 64 || e.MessageType != WebSocketMessageType.Binary)
     {
@@ -87,7 +89,7 @@ void WebSocketServer_MessageReceived(object? sender, MessageReceivedEventArgs e)
     string conversationId = Convert.ToBase64String(e.Data[..64]);
 
     _ = clientIds.TryAdd(e.Client.Guid, []);
-    _ = conversations.TryAdd(conversationId, (Guid.Empty, Guid.Empty));
+    _ = conversations.TryAdd(conversationId, new Conversation(Guid.Empty, Guid.Empty, new(), new()));
 
     if (!clientIds.TryGetValue(e.Client.Guid, out HashSet<string>? conversationIds))
     {
@@ -99,38 +101,53 @@ void WebSocketServer_MessageReceived(object? sender, MessageReceivedEventArgs e)
         _ = conversationIds.Add(conversationId);
     }
 
-    (Guid Client1, Guid Client2) conversation = conversations.GetValueOrDefault(conversationId);
+    Conversation conversation = conversations.GetValueOrDefault(conversationId);
 
     bool clientAlreadyInConversation = conversation.Client1 == e.Client.Guid || conversation.Client2 == e.Client.Guid;
 
     if (conversation.Client1 == Guid.Empty && !clientAlreadyInConversation)
     {
-        _ = conversations.TryUpdate(conversationId, (e.Client.Guid, conversation.Client2), conversation);
-        conversation = conversations.GetValueOrDefault(conversationId);
+        conversation.Client1 = e.Client.Guid;
+        conversations[conversationId] = conversation;
         Console.WriteLine($"Client {e.Client.Guid} connected to conversation {conversationId} as Client 1");
+        await ProcessMessageQueue(e.Client.Guid, conversationId);
     }
     else if (conversation.Client2 == Guid.Empty && !clientAlreadyInConversation)
     {
-        _ = conversations.TryUpdate(conversationId, (conversation.Client1, e.Client.Guid), conversation);
-        conversation = conversations.GetValueOrDefault(conversationId);
+        conversation.Client2 = e.Client.Guid;
+        conversations[conversationId] = conversation;
         Console.WriteLine($"Client {e.Client.Guid} connected to conversation {conversationId} as Client 2");
+        await ProcessMessageQueue(e.Client.Guid, conversationId);
     }
 
-    if (conversation.Client1 == Guid.Empty || conversation.Client2 == Guid.Empty)
+    if (e.Data.Count <= 64)
     {
-        Console.WriteLine($"Client {e.Client.Guid} is waiting for the other client to connect to conversation {conversationId}");
+        Console.WriteLine("Only conversation ID received");
+        return;
+    }
+
+    if (conversation.Client1 == Guid.Empty)
+    {
+        Console.WriteLine($"Client 2 is waiting for Client 1 to connect to conversation {conversationId}");
+        conversation.MessageQueue1.Enqueue(e.Data);
+        return;
+    }
+    else if (conversation.Client2 == Guid.Empty)
+    {
+        Console.WriteLine($"Client 1 is waiting for Client 2 to connect to conversation {conversationId}");
+        conversation.MessageQueue2.Enqueue(e.Data);
         return;
     }
 
     if (conversation.Client1 == e.Client.Guid)
     {
         Console.WriteLine($"Sending message from Client 1 to Client 2 in conversation {conversationId}");
-        _ = webSocketServer.SendAsync(conversation.Client2, e.Data);
+        _ = await webSocketServer.SendAsync(conversation.Client2, e.Data);
     }
     else if (conversation.Client2 == e.Client.Guid)
     {
         Console.WriteLine($"Sending message from Client 2 to Client 1 in conversation {conversationId}");
-        _ = webSocketServer.SendAsync(conversation.Client1, e.Data);
+        _ = await webSocketServer.SendAsync(conversation.Client1, e.Data);
     }
     else
     {
@@ -138,3 +155,58 @@ void WebSocketServer_MessageReceived(object? sender, MessageReceivedEventArgs e)
         webSocketServer.DisconnectClient(e.Client.Guid);
     }
 }
+
+async Task ProcessMessageQueue(Guid clientId, string conversationId)
+{
+    if (!conversations.TryGetValue(conversationId, out Conversation conversation))
+    {
+        return;
+    }
+
+    if (conversation.Client1 == clientId)
+    {
+        int tries = 0;
+
+        while (conversation.MessageQueue1.TryPeek(out ArraySegment<byte> message))
+        {
+            Console.WriteLine($"Processing queued message from Client 2 to Client 1 in conversation {conversationId}");
+
+            tries++;
+
+            if (tries > conversation.MessageQueue1.Count * 2)
+            {
+                break;
+            }
+
+            if (await webSocketServer.SendAsync(conversation.Client1, message))
+            {
+                _ = conversation.MessageQueue1.TryDequeue(out _);
+                tries = 0;
+            }
+        }
+    }
+    else if (conversation.Client2 == clientId)
+    {
+        int tries = 0;
+
+        while (conversation.MessageQueue2.TryPeek(out ArraySegment<byte> message))
+        {
+            Console.WriteLine($"Processing queued message from Client 1 to Client 2 in conversation {conversationId}");
+
+            tries++;
+
+            if (tries > conversation.MessageQueue2.Count * 2)
+            {
+                break;
+            }
+
+            if (await webSocketServer.SendAsync(conversation.Client2, message))
+            {
+                _ = conversation.MessageQueue2.TryDequeue(out _);
+                tries = 0;
+            }
+        }
+    }
+}
+
+public record struct Conversation(Guid Client1, Guid Client2, ConcurrentQueue<ArraySegment<byte>> MessageQueue1, ConcurrentQueue<ArraySegment<byte>> MessageQueue2);
