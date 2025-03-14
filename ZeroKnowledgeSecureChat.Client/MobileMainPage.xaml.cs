@@ -28,18 +28,8 @@ public partial class MobileMainPage : ContentPage
         _ = Navigation.PushAsync(new MobileChatPage(chatClientViewModel), true);
     }
 
-    private async void ContentPage_Loaded(object sender, EventArgs e)
+    private void SfButton_Clicked(object sender, EventArgs e)
     {
-        if (dataContext.ChatClients.Count > 0)
-        {
-            return;
-        }
-
-        await dataContext.Load();
-    }
-
-    private async void SfButton_Clicked(object sender, EventArgs e)
-    {
-        await dataContext.Save();
+        _ = App.Save();
     }
 }

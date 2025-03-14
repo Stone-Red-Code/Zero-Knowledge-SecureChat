@@ -172,8 +172,8 @@
             </sfPopup:SfPopup.PopupStyle>
             <sfPopup:SfPopup.ContentTemplate>
                 <DataTemplate x:DataType="local:MainPageDataContext">
-                    <sfProgressBar:SfCircularProgressBar TrackFill="Transparent" Background="Transparent" Progress="{Binding LoadingProgress}" IsIndeterminate="{Binding LoadingIndeterminate}" Maximum="1">
-                        <Label Text="{Binding LoadingProgress, StringFormat='{0:P}'}" HorizontalTextAlignment="Center" WidthRequest="100" TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" FontSize="Subtitle" />
+                    <sfProgressBar:SfCircularProgressBar TrackFill="Transparent" Background="Transparent" ProgressThickness="10" Progress="{Binding LoadingProgress}" IsIndeterminate="{Binding LoadingIndeterminate}" Maximum="1">
+                        <Label Text="{Binding LoadingProgress, StringFormat='{0:P}'}" HorizontalTextAlignment="Center" WidthRequest="100" TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" IsVisible="{Binding LoadingIndeterminate, Converter={StaticResource InvertedBoolConverter}}" FontSize="Subtitle" />
                     </sfProgressBar:SfCircularProgressBar>
                 </DataTemplate>
             </sfPopup:SfPopup.ContentTemplate>

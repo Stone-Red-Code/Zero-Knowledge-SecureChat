@@ -119,7 +119,7 @@ internal partial class MainPageDataContext : INotifyPropertyChanged
         NewConversationDialogIsOpen = false;
         NewConversationName = string.Empty;
 
-        await Save();
+        await App.Save();
     });
 
     public ICommand ImportConversation => new Command(async () =>
@@ -165,114 +165,11 @@ internal partial class MainPageDataContext : INotifyPropertyChanged
 
         await Toast.Make("The conversation was imported successfully").Show();
 
-        await Save();
+        await App.Save();
     });
 
     public void OnPropertyChanged([CallerMemberName] string name = "")
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
-    public async Task Load()
-    {
-        Loading = true;
-        LoadingText = "Loading conversations...";
-
-        int count = 0;
-        string? chunk;
-        StringBuilder json = new StringBuilder();
-
-        string? chunkCountString = await SecureStorage.Default.GetAsync("conversations_chunk_count");
-
-        if (!double.TryParse(chunkCountString, out double chunkCount))
-        {
-            chunkCount = 1;
-        }
-
-        do
-        {
-            chunk = await SecureStorage.Default.GetAsync($"conversations_{count}");
-            _ = json.Append(chunk);
-            count++;
-            if (count % 50 == 0)
-            {
-                LoadingProgress = count / chunkCount;
-            }
-        } while (chunk is not null);
-
-        if (json.Length == 0)
-        {
-            Loading = false;
-            return;
-        }
-
-        IEnumerable<ChatClientState>? chatClientStates;
-
-        try
-        {
-            chatClientStates = JsonSerializer.Deserialize<IEnumerable<ChatClientState>>(json.ToString(), jsonSerializerOptions);
-        }
-        catch
-        {
-            Loading = false;
-            return;
-        }
-
-        if (chatClientStates is null)
-        {
-            Loading = false;
-            return;
-        }
-
-        foreach (ChatClientState chatClientState in chatClientStates)
-        {
-            ChatClientViewModel chatClient = new ChatClientViewModel(new WebSocketChatClient(chatClientState, App.WebSocketClient));
-            ChatClients.Add(chatClient);
-        }
-
-        Loading = false;
-    }
-
-    public async Task Save()
-    {
-        Loading = true;
-        LoadingText = "Saving conversations...";
-
-        string json = await Task.Run(() => JsonSerializer.Serialize(ChatClients.Select(c => c.ChatClient.ChatClientState), jsonSerializerOptions));
-        int count = 0;
-
-#if WINDOWS
-        int chunkSize = 4096;
-#else
-        int chunkSize = 409600;
-#endif
-
-        double approximateChunkCount = json.Length / (double)chunkSize;
-
-        SecureStorage.Default.RemoveAll();
-
-        while (json.Length > 0)
-        {
-            int startIndex = Math.Min(count * chunkSize, json.Length);
-            int length = Math.Min(chunkSize, json.Length - startIndex);
-
-            if (length <= 0)
-            {
-                break;
-            }
-
-            string chunk = json.Substring(startIndex, length);
-            await SecureStorage.Default.SetAsync($"conversations_{count}", chunk);
-            count++;
-
-            if (count % 50 == 0)
-            {
-                LoadingProgress = count / approximateChunkCount;
-            }
-        }
-
-        await SecureStorage.Default.SetAsync($"conversations_chunk_count", count.ToString());
-
-        Loading = false;
     }
 }

@@ -12,8 +12,7 @@
              xmlns:sfTheme="clr-namespace:Syncfusion.Maui.Themes;assembly=Syncfusion.Maui.Core"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:DataType="local:MainPageDataContext"
-             x:Class="ZeroKnowledgeSecureChat.MobileMainPage"
-             Loaded="ContentPage_Loaded">
+             x:Class="ZeroKnowledgeSecureChat.MobileMainPage">
 
     <ContentPage.Resources>
         <ResourceDictionary>

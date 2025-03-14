@@ -11,7 +11,7 @@ public partial class MainPage : ContentPage
         BindingContext = dataContext;
     }
 
-    private async void ContentPage_Loaded(object sender, EventArgs e)
+    private void ContentPage_Loaded(object sender, EventArgs e)
     {
 #if WINDOWS
         Microsoft.UI.Xaml.FrameworkElement? nativeView = conversationsListView.Handler!.PlatformView as Microsoft.UI.Xaml.FrameworkElement;
@@ -26,12 +26,10 @@ public partial class MainPage : ContentPage
             nativeView.UseSystemFocusVisuals = false;
         }
 #endif
-
-        await dataContext.Load();
     }
 
     private async void SfButton_Clicked(object sender, EventArgs e)
     {
-        await dataContext.Save();
+        await App.Save();
     }
 }

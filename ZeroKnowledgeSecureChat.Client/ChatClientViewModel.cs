@@ -71,7 +71,7 @@ public partial class ChatClientViewModel : INotifyPropertyChanged
 
         chatClient.SendReceiveStateChanged += (s, e) => SendReceiveState = e;
         chatClient.ErrorReceived += (s, e) => ErrorMessage = e;
-        chatClient.MessageReceived += (s, e) => Application.Current?.Dispatcher.Dispatch(() => { Messages.Add(CreateTextMessage(e)); UpdateMessageRelatedProperties(); });
+        chatClient.MessageReceived += (s, e) => Application.Current?.Dispatcher.Dispatch(() => { Messages.Add(CreateTextMessage(e)); UpdateMessageRelatedProperties(); _ = App.Save(); });
 
         SendMessage = new Command(async (object? args) =>
         {
@@ -122,6 +122,7 @@ public partial class ChatClientViewModel : INotifyPropertyChanged
             else
             {
                 ErrorMessage = string.Empty;
+                await App.Save();
             }
         });
     }
