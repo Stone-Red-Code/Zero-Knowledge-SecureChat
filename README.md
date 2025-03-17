@@ -44,7 +44,7 @@ Each transmitted packet follows this strict structure:
 ### Message Format
 
 ```text
-[Content length (2 bytes)][Content][New OTP Key]
+[Content length (2 bytes)][Content][New OTP Key ((Current key lenght - Content length - 2) bytes)]
 ```
 
 - **Content length:** Specifies the length of the message.
